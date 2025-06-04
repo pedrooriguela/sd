@@ -8,9 +8,8 @@ module control_unit(
     output alusrc,
     output regwrite,
     output [3:0] aluctl,
-    output branch,
-    output pcsrc
-);
+    output branch
+    );
     // Definição dos opcodes (conforme ISA RISC-V)
     localparam R_TYPE    = 7'b0110011;  // ADD
     localparam I_TYPE    = 7'b0010011;  // ADDI
@@ -34,7 +33,5 @@ module control_unit(
     // Para BEQ: ALUctl = 0110 (subtração para testar igualdade)
     assign aluctl = is_branch ? 4'b0110 : 4'b0010;
     
-    // Controle de salto: só salta se for instrução de branch E a condição for verdadeira
-    assign pcsrc = branch & zero;
 
 endmodule

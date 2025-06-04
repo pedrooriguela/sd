@@ -96,45 +96,6 @@ module instruction_memory
     end
 endmodule
 
-module program_counter
-  #(parameter W = 32)
-(
-  input clk,
-  input rst,  // Adicionar reset
-  input [W-1:0] next_pc,
-  output reg [W-1:0] pc
-);
-
-  initial begin
-    pc = 32'h0;  // Inicializa o PC com zero
-  end
-
-  // Reset assíncrono
-  always @(posedge clk or posedge rst) begin
-    if (rst)
-      pc <= 32'h0;  // Reset para endereço 0
-    else
-      pc <= next_pc;
-  end
-endmodule
-
-module jumper
-  #(parameter W = 32)
-(
-  input [31:0] pc,
-  input branch,
-  input zero,
-  input [31:0] imm,
-  output [31:0] next_pc
-);
-  wire [31:0] pc_mais_4;
-  wire [31:0] pc_mais_imm;
-  
-  assign pc_mais_4 = pc + 4;
-  assign pc_mais_imm = pc + imm;
-
-  assign next_pc = (branch & zero) ? pc_mais_imm : pc_mais_4;
-endmodule
 
 module imm_gen(
   input [31:0] instruction,  // Recebe a instrução completa
@@ -149,6 +110,10 @@ module imm_gen(
         imm_out = {{20{instruction[31]}}, instruction[31:20]};
       7'b1100011: // BEQ (tipo B)
         imm_out = {{19{instruction[31]}}, instruction[31], instruction[7], instruction[30:25], instruction[11:8], 1'b0};
+      7'b1101111: // JAL (tipo J)
+      imm_out = {{11{instruction[31]}}, instruction[31], instruction[19:12], instruction[20], instruction[30:21], 1'b0};
+      7'b0110111: //LUI
+      imm_out = {instruction[31:12], 12'b0};
       default:
         imm_out = 32'b0;
     endcase
@@ -175,93 +140,88 @@ module DataMemory
 endmodule
 
 
-module datapath 
-  #(parameter W = 32, IFILE = "rom_hex.mem")
-
+module datapath
+  #(parameter W = 32,
+    parameter IFILE = "rom_hex.mem")
 (
-  input clk,
-  input branch,
-  input mem2reg,
-  input memwrite,
-  input alusrc,
-  input regwrite,
-  input pcsrc,
-  input rst,
-  input [3:0] aluctl,
-  output zero,
-  output [31:0] instruction,
-  output [31:0] pc
+  input              clk,
+  input              rst,
+  // sinais de controle vindos da control_unit
+  input              branch,
+  input              mem2reg,
+  input              memwrite,
+  input              alusrc,
+  input              regwrite,
+  input     [3:0]    aluctl,
+  output             zero,
+  output    [W-1:0]  instruction,
+  output reg  [W-1:0]  pc
 );
 
-wire [31:0] next_pc;
-wire [31:0] WriteData;
+  wire [W-1:0] imm, next_pc, alu_out, rd1, rd2, memout;
+  wire         pcsrc = branch & zero;
 
-  program_counter #(W) pc0 (
-    .clk(clk),
-    .next_pc(next_pc),
-    .pc(pc),
-    .rst(rst)
-  );
-
-  jumper #(W) jmp0 (
-    .pc(pc),
-    .branch(branch),
-    .zero(zero),
-    .imm(imm),
-    .next_pc(next_pc)
-  );
-
-  instruction_memory #(W) im0 (
+  // 3.3) Busca de instrução
+  instruction_memory #(.W(W), .IFILE(IFILE)) im0 (
     .addr(pc),
     .CS(1'b1),
     .OE(1'b1),
-    .regwrite(1'b0),
+    .regwrite(regwrite),
     .out(instruction)
   );
 
+  // 3.4) Geração de imediato
+  imm_gen ig0 (
+    .instruction(instruction),
+    .imm_out(imm)
+  );
 
-  wire [31:0] rd1;
-  wire [31:0] rd2;
-  registerfile #(W) rf0 (
+  // 3.5) Arquivo de registradores
+  registerfile #(.W(W)) rf0 (
     .Read1(instruction[19:15]),
     .Read2(instruction[24:20]),
     .WriteReg(instruction[11:7]),
-    .WriteData(WriteData), 
+    .WriteData(mem2reg ? memout : alu_out),
     .RegWrite(regwrite),
     .clk(clk),
     .Data1(rd1),
     .Data2(rd2)
   );
 
-  wire [31:0]imm;
-  imm_gen ig0 (
-    .instruction(instruction),
-    .imm_out(imm)
-  );
+  always @(posedge clk or posedge rst) begin
+    if (rst) begin
+      pc <= 0;
+    end else if (pcsrc) begin
+      pc <= pc + imm; // Atualiza o PC com o valor do imediato
+    end
+    else begin
+      pc <= pc + 4; // Incrementa o PC para a próxima instrução
+    end
+  end
 
-  wire [31:0] entrada_2_ula = alusrc ? imm : rd2;
-  wire [31:0] ula_out;
-  
-  alu #(W) ula0 (
-    .ALUctl(aluctl),
+  wire is_jalr = (instruction[6:0] == 7'b1100111);
+  wire is_lui = (instruction[6:0] == 7'b0110111);
+
+  // 3.6) ALU
+  wire [W-1:0] alu_src2 = alusrc ? imm : rd2;
+  alu ula0 (
     .A(rd1),
-    .B(entrada_2_ula),
-    .ALUout(ula_out),
-    .zero(zero),
-    .rst(rst)
+    .B(alu_src2),
+    .ALUctl(aluctl),
+    .ALUout(alu_out),
+    .zero(zero)
   );
 
-
-  wire [31:0] data_mem_out;
-  DataMemory #(W) dm0 (
-    .addr(ula_out),
+  // 3.7) Memória de dados
+  DataMemory #(.W(W)) dm0 (
+    .addr(alu_out),
     .data_in(rd2),
     .memwrite(memwrite),
-    .memread(1'b1),
+    .memread(mem2reg),
     .clk(clk),
-    .data_out(data_mem_out)
+    .data_out(memout)
   );
-  assign WriteData = mem2reg ? data_mem_out : ula_out;
 
+  assign WriteData = is_lui ? imm : (mem2reg ? data_mem_out : ula_out);
 
 endmodule
