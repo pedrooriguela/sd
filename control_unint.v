@@ -17,6 +17,7 @@ module control_unit(
     localparam BRANCH = 7'b1100011;  // BEQ
     localparam J_TYPE = 7'B1101111; // JAL /////////////////////
     localparam JALR = 7'b1100111; //JALR
+    localparam LUI = 7'b0110111; //LUI
 
     
     // Detecção dos tipos de instrução
@@ -26,13 +27,14 @@ module control_unit(
 
     wire is_jtype = (opcode == J_TYPE); //////////////////////
     wire is_jalr = (opcode == JALR);
+    wire is_lui = (opcode == LUI);
     
     // Sinais de controle
     assign branch   = is_branch;
     assign mem2reg  = 1'b0;        // Não usamos load no fibonacci
     assign memwrite = 1'b0;        // Não usamos store no fibonacci
-    assign alusrc   = is_itype | is_jalr;    // Usa imediato apenas para ADDI
-    assign regwrite = is_rtype | is_itype | is_jtype | is_jalr;  // ADD, ADDI, JAL e JALR escrevem no banco de registradores
+    assign alusrc   = is_itype | is_jalr | is_lui;    // Usa imediato apenas para ADDI
+    assign regwrite = is_rtype | is_itype | is_jtype | is_jalr| is_lui;  // ADD, ADDI, JAL e JALR escrevem no banco de registradores
     
     // Operação da ALU
     // Para ADD/ADDI: ALUctl = 0010 (soma)

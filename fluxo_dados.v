@@ -152,6 +152,8 @@ module imm_gen(
         
       7'b1101111: // JAL (tipo J)
       imm_out = {{11{instruction[31]}}, instruction[31], instruction[19:12], instruction[20], instruction[30:21], 1'b0};
+      7'b0110111: //LUI
+      imm_out = {instruction[31:12], 12'b0};
       default:
         imm_out = 32'b0;
     endcase
@@ -207,7 +209,7 @@ wire [31:0] WriteData;
   );
 
 wire is_jalr = (instruction[6:0] == 7'b1100111);
-assign is_jalr (opcode)
+wire is_lui = (instruction[6:0] == 7'b0110111);
   jumper #(W) jmp0 (
     .pc(pc),
     .pcsrc(pcsrc),
@@ -267,7 +269,7 @@ assign is_jalr (opcode)
     .clk(clk),
     .data_out(data_mem_out)
   );
-  assign WriteData = mem2reg ? data_mem_out : ula_out;
+  assign WriteData = is_lui ? imm : (mem2reg ? data_mem_out : ula_out);
 
 
 endmodule
