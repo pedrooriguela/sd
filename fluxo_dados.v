@@ -122,18 +122,18 @@ module jumper
   #(parameter W = 32)
 (
   input [31:0] pc,
-  input branch,
-  input zero,
+  input pcsrc,
+  input is_jalr,
   input [31:0] imm,
+  input [31:0] rd1,
   output [31:0] next_pc
 );
-  wire [31:0] pc_mais_4;
-  wire [31:0] pc_mais_imm;
-  
-  assign pc_mais_4 = pc + 4;
-  assign pc_mais_imm = pc + imm;
+  wire [31:0] pc_mais_4 = pc + 4;
+  wire [31:0] pc_mais_imm = pc + imm;
+  wire [31:0] rs1_mais_imm = rd1 + imm;
 
-  assign next_pc = (branch & zero) ? pc_mais_imm : pc_mais_4;
+  assign next_pc = is_jalr ? rs1_mais_imm :
+                   (pcsrc ? pc_mais_imm : pc_mais_4);
 endmodule
 
 module imm_gen(
@@ -149,6 +149,9 @@ module imm_gen(
         imm_out = {{20{instruction[31]}}, instruction[31:20]};
       7'b1100011: // BEQ (tipo B)
         imm_out = {{19{instruction[31]}}, instruction[31], instruction[7], instruction[30:25], instruction[11:8], 1'b0};
+        
+      7'b1101111: // JAL (tipo J)
+      imm_out = {{11{instruction[31]}}, instruction[31], instruction[19:12], instruction[20], instruction[30:21], 1'b0};
       default:
         imm_out = 32'b0;
     endcase
@@ -203,11 +206,14 @@ wire [31:0] WriteData;
     .rst(rst)
   );
 
+wire is_jalr = (instruction[6:0] == 7'b1100111);
+assign is_jalr (opcode)
   jumper #(W) jmp0 (
     .pc(pc),
-    .branch(branch),
-    .zero(zero),
+    .pcsrc(pcsrc),
+    .is_jalr(is_jalr),
     .imm(imm),
+    .rd1(rd1),
     .next_pc(next_pc)
   );
 
