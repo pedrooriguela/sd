@@ -1,4 +1,5 @@
 // 15484395 Pedro Origuela Porto
+// 15695737 Rafael Dantas Mendonça Carnauskas
 // os modulos da alu e do registerfile ja estão neste arquivo
 
 module alu
