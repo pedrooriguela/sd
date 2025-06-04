@@ -112,9 +112,11 @@ module imm_gen(
       7'b1100011: // BEQ (tipo B)
         imm_out = {{19{instruction[31]}}, instruction[31], instruction[7], instruction[30:25], instruction[11:8], 1'b0};
       7'b1101111: // JAL (tipo J)
-      imm_out = {{11{instruction[31]}}, instruction[31], instruction[19:12], instruction[20], instruction[30:21], 1'b0};
+        imm_out = {{11{instruction[31]}}, instruction[31], instruction[19:12], instruction[20], instruction[30:21], 1'b0};
       7'b0110111: //LUI
-      imm_out = {instruction[31:12], 12'b0};
+        imm_out = {instruction[31:12], 12'b0};
+      7'b0010111: // AUIPC
+        imm_out = {instruction[31:12], 12'b0};
       default:
         imm_out = 32'b0;
     endcase
@@ -160,7 +162,11 @@ module datapath
 );
 
   wire [W-1:0] imm, next_pc, alu_out, rd1, rd2, memout;
-  wire         pcsrc = branch & zero;
+  
+  wire is_jalr = (instruction[6:0] == 7'b1100111);
+  wire is_jal  = (instruction[6:0] == 7'b1101111);
+  wire is_auipc = (instruction[6:0] == 7'b0010111);
+  wire pcsrc = (branch & zero) | is_jal | is_jalr;
 
   // 3.3) Busca de instrução
   instruction_memory #(.W(W), .IFILE(IFILE)) im0 (
@@ -182,7 +188,7 @@ module datapath
     .Read1(instruction[19:15]),
     .Read2(instruction[24:20]),
     .WriteReg(instruction[11:7]),
-    .WriteData(mem2reg ? memout : alu_out),
+    .WriteData(is_auipc ? (pc + imm) : (is_lui ? imm : (mem2reg ? memout : alu_out))),
     .RegWrite(regwrite),
     .clk(clk),
     .Data1(rd1),
@@ -200,13 +206,10 @@ module datapath
     end
   end
 
-  wire is_jalr = (instruction[6:0] == 7'b1100111);
-  wire is_lui = (instruction[6:0] == 7'b0110111);
-
   // 3.6) ALU
   wire [W-1:0] alu_src2 = alusrc ? imm : rd2;
   alu ula0 (
-    .A(rd1),
+    .A(is_auipc ? pc : rd1),
     .B(alu_src2),
     .ALUctl(aluctl),
     .ALUout(alu_out),

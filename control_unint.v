@@ -15,23 +15,35 @@ module control_unit(
     localparam I_TYPE    = 7'b0010011;  // ADDI
     localparam BRANCH    = 7'b1100011;  // BEQ
 
+    localparam JALR = 7'b1100111;
+    localparam JAL = 7'b1101111;
+    localparam LUI = 7'B0110111;
+    localparam AUIPC = 7'B0010111;
+
     
     // Detecção dos tipos de instrução
     wire is_rtype = (opcode == R_TYPE);
     wire is_itype = (opcode == I_TYPE);
     wire is_branch = (opcode == BRANCH);
+
+    wire is_jalr = (opcode == JALR);
+    wire is_jal = (opcode == JAL);
+    wire is_lui = (opcode == LUI);
+    wire is_auipc = (opcode == AUIPC);
     
     // Sinais de controle
     assign branch   = is_branch;
     assign mem2reg  = 1'b0;        // Não usamos load no fibonacci
     assign memwrite = 1'b0;        // Não usamos store no fibonacci
-    assign alusrc   = is_itype;    // Usa imediato apenas para ADDI
-    assign regwrite = is_rtype | is_itype;  // ADD e ADDI escrevem no banco de registradores
+    assign alusrc   = is_itype | is_jalr| is_lui;    // Usa imediato para ADDI, JALR e LUI
+    assign regwrite = is_rtype | is_itype | is_jal | is_jalr| is_lui | is_auipc;  // ADD, ADDI, JAL, JALR, LUI e AUIPC escrevem no banco de registradores
     
     // Operação da ALU
     // Para ADD/ADDI: ALUctl = 0010 (soma)
     // Para BEQ: ALUctl = 0110 (subtração para testar igualdade)
     assign aluctl = is_branch ? 4'b0110 : 4'b0010;
+
+    /*pode ser que precise de um novo sinal para selecionar o WriteData correto*/
     
 
 endmodule
