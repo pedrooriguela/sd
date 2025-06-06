@@ -226,6 +226,6 @@ module datapath
     .data_out(memout)
   );
 
-  assign WriteData = is_lui ? imm : (mem2reg ? data_mem_out : ula_out);
+  assign WriteData = is_lui ? imm : (mem2reg ? memout : alu_out);
 
 endmodule
