@@ -46,11 +46,11 @@ module poliriscv_sc_tb;
                     riscv.zero_comb,
                     riscv.branch_comb,
                     riscv.pcsrc,
-                    riscv.datapath0.rf0.registers[10], // a0 (x10)
-                    riscv.datapath0.rf0.registers[12], // a2 (x12)
-                    riscv.datapath0.rf0.registers[13], // a3 (x13)
-                    riscv.datapath0.rf0.registers[14], // a4 (x14)
-                    riscv.datapath0.rf0.registers[15]  // a5 (x15)
+                    riscv.datapath0.rf0.registers[2], // a0 (x10)
+                    riscv.datapath0.rf0.registers[3], // a2 (x12)
+                    riscv.datapath0.rf0.registers[5], // a3 (x13)
+                    riscv.datapath0.rf0.registers[6], // a4 (x14)
+                    riscv.datapath0.rf0.registers[7]  // a5 (x15)
                     );
         end
         
@@ -58,11 +58,11 @@ module poliriscv_sc_tb;
         $display("\n=== Fim da simulação após %0d ciclos ===", i);
         $display("PC final = 0x%h", riscv.pc);
         $display("Valores finais dos registradores:");
-        $display("a0 (x10) = 0x%h", riscv.datapath0.rf0.registers[10]);
-        $display("a2 (x12) = 0x%h", riscv.datapath0.rf0.registers[12]);
-        $display("a3 (x13) = 0x%h", riscv.datapath0.rf0.registers[13]);
-        $display("a4 (x14) = 0x%h", riscv.datapath0.rf0.registers[14]);
-        $display("a5 (x15) = 0x%h", riscv.datapath0.rf0.registers[15]);
+        $display("a0 (2) = 0x%h", riscv.datapath0.rf0.registers[2]);
+        $display("a2 (3) = 0x%h", riscv.datapath0.rf0.registers[3]);
+        $display("a3 (5) = 0x%h", riscv.datapath0.rf0.registers[5]);
+        $display("a4 (6) = 0x%h", riscv.datapath0.rf0.registers[6]);
+        $display("a5 (7) = 0x%h", riscv.datapath0.rf0.registers[7]);
         
         $finish;
     end

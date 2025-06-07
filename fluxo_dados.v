@@ -73,8 +73,8 @@ module instruction_memory
   output reg [31:0] out
 );
 
-  reg [7:0] data[1023:0];  // Armazena bytes individuais
-  wire [W-1:0] word_addr = addr >> 2;  // Converte endereço para índice de palavras
+  reg [7:0] data[1023:0];  
+  wire [W-1:0] word_addr = addr >> 2;
   integer i;
   
   initial begin
@@ -98,7 +98,7 @@ endmodule
 
 
 module imm_gen(
-  input [31:0] instruction,  // Recebe a instrução completa
+  input [31:0] instruction,  
   output reg [31:0] imm_out
 );
   wire [6:0] opcode = instruction[6:0];
@@ -106,6 +106,8 @@ module imm_gen(
 
   always @(*) begin
     case (opcode)
+      7'b1100111:
+        imm_out = {{20{instruction[31]}}, instruction[31:20]};
       7'b0010011: // ADDI (tipo I)
         imm_out = {{20{instruction[31]}}, instruction[31:20]};
       7'b1100011: // BEQ (tipo B)
@@ -146,8 +148,10 @@ module datapath
 (
   input              clk,
   input              rst,
-  // sinais de controle vindos da control_unit
   input              branch,
+  input              is_lui,
+  input              is_jal,
+  input              is_jalr,
   input              mem2reg,
   input              memwrite,
   input              alusrc,
@@ -158,10 +162,15 @@ module datapath
   output reg  [W-1:0]  pc
 );
 
-  wire [W-1:0] imm, next_pc, alu_out, rd1, rd2, memout;
-  wire         pcsrc = branch & zero;
 
-  // 3.3) Busca de instrução
+  wire [W-1:0] WriteData;
+  wire [W-1:0] imm, next_pc, alu_out, rd1, rd2, memout;
+  wire [2:0] pcsrc = branch & zero ? 3'b001 : 
+                    is_jal ? 3'b010 :
+                    is_jalr ? 3'b011 :
+                    is_lui ? 3'b100 :
+                    3'b000;
+
   instruction_memory #(.W(W), .IFILE(IFILE)) im0 (
     .addr(pc),
     .CS(1'b1),
@@ -170,18 +179,16 @@ module datapath
     .out(instruction)
   );
 
-  // 3.4) Geração de imediato
   imm_gen ig0 (
     .instruction(instruction),
     .imm_out(imm)
   );
 
-  // 3.5) Arquivo de registradores
   registerfile #(.W(W)) rf0 (
     .Read1(instruction[19:15]),
     .Read2(instruction[24:20]),
     .WriteReg(instruction[11:7]),
-    .WriteData(mem2reg ? memout : alu_out),
+    .WriteData(WriteData),
     .RegWrite(regwrite),
     .clk(clk),
     .Data1(rd1),
@@ -191,18 +198,17 @@ module datapath
   always @(posedge clk or posedge rst) begin
     if (rst) begin
       pc <= 0;
-    end else if (pcsrc) begin
-      pc <= pc + imm; // Atualiza o PC com o valor do imediato
+    end else if (pcsrc == 1 || pcsrc == 2) begin
+      pc <= pc + imm; 
+    end else if (pcsrc ==3) begin
+      pc <= (rd1 + imm) & ~1; // JALR: rs1 + imm com bit 0 forçado para 0
     end
     else begin
-      pc <= pc + 4; // Incrementa o PC para a próxima instrução
+      pc <= pc + 4;
     end
   end
 
-  wire is_jalr = (instruction[6:0] == 7'b1100111);
-  wire is_lui = (instruction[6:0] == 7'b0110111);
 
-  // 3.6) ALU
   wire [W-1:0] alu_src2 = alusrc ? imm : rd2;
   alu ula0 (
     .A(rd1),
@@ -212,7 +218,6 @@ module datapath
     .zero(zero)
   );
 
-  // 3.7) Memória de dados
   DataMemory #(.W(W)) dm0 (
     .addr(alu_out),
     .data_in(rd2),
@@ -222,6 +227,7 @@ module datapath
     .data_out(memout)
   );
 
-  assign WriteData = is_lui ? imm : (mem2reg ? data_mem_out : ula_out);
-
+  assign WriteData = is_lui ? imm : 
+                    (is_jal || is_jalr) ? pc + 4 :
+                    mem2reg ? memout : alu_out;
 endmodule
