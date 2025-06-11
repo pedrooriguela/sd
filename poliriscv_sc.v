@@ -12,10 +12,16 @@ module poliriscv_sc #(
     wire memwrite;
     wire alusrc;
     wire regwrite;
+    wire is_jal;
+    wire is_jalr;
+    wire is_lui;
     wire [3:0] aluctl;
     wire pcsrc;
     wire zero_comb;
     wire branch_comb;
+    wire branch_confirm;
+
+    wire [3:0] branch_type;
     
     // Registradores para zero e branch
 
@@ -36,7 +42,11 @@ module poliriscv_sc #(
         .rst(rst),
         .zero(zero_comb),  // Agora conectamos ao sinal combinatório
         .instruction(instruction),
-        .pc(pc)
+        .pc(pc),
+        .is_jal(is_jal),
+        .is_jalr(is_jalr),
+        .is_lui(is_lui),
+        .branch_confirm(branch_confirm)
     );
 
     control_unit control_unit0 (
@@ -49,7 +59,11 @@ module poliriscv_sc #(
         .zero(zero_comb),
         .alusrc(alusrc),
         .regwrite(regwrite),
-        .aluctl(aluctl)
+        .aluctl(aluctl),
+        .is_jal(is_jal),
+        .is_jalr(is_jalr),
+        .is_lui(is_lui),
+        branch_confirm(branch_confirm)
     );
 
 endmodule

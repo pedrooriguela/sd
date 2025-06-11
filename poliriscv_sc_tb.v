@@ -64,6 +64,23 @@ module poliriscv_sc_tb;
         $display("a4 (x14) = 0x%h", riscv.datapath0.rf0.registers[14]);
         $display("a5 (x15) = 0x%h", riscv.datapath0.rf0.registers[15]);
         
+        $display("x0  = 0x%h", riscv.datapath0.rf0.registers[0]);
+        $display("x1  = 0x%h", riscv.datapath0.rf0.registers[1]);
+        $display("x2  = 0x%h", riscv.datapath0.rf0.registers[2]);
+        $display("x3  = 0x%h", riscv.datapath0.rf0.registers[3]);
+        $display("x4  = 0x%h", riscv.datapath0.rf0.registers[4]);
+        $display("x5  = 0x%h", riscv.datapath0.rf0.registers[5]);
+        $display("x6  = 0x%h", riscv.datapath0.rf0.registers[6]);
+        $display("x7  = 0x%h", riscv.datapath0.rf0.registers[7]);
+        $display("x8  = 0x%h", riscv.datapath0.rf0.registers[8]);
+        $display("x9  = 0x%h", riscv.datapath0.rf0.registers[9]);
+        $display("x10 = 0x%h", riscv.datapath0.rf0.registers[10]);
+        $display("x11 = 0x%h", riscv.datapath0.rf0.registers[11]);
+        $display("x12 = 0x%h", riscv.datapath0.rf0.registers[12]);
+        $display("x13 = 0x%h", riscv.datapath0.rf0.registers[13]);
+        $display("x14 = 0x%h", riscv.datapath0.rf0.registers[14]);
+        $display("x15 = 0x%h", riscv.datapath0.rf0.registers[15]);
+        
         $finish;
     end
 
