@@ -15,6 +15,7 @@ module poliriscv_sc #(
     wire is_jal;
     wire is_jalr;
     wire is_lui;
+    wire is_auipc;
     wire [3:0] aluctl;
     wire pcsrc;
     wire zero_comb;
@@ -46,6 +47,7 @@ module poliriscv_sc #(
         .is_jal(is_jal),
         .is_jalr(is_jalr),
         .is_lui(is_lui),
+        .is_auipc(is_auipc),
         .branch_confirm(branch_confirm)
     );
 
@@ -63,6 +65,7 @@ module poliriscv_sc #(
         .is_jal(is_jal),
         .is_jalr(is_jalr),
         .is_lui(is_lui),
+        .is_auipc(is_auipc),
         branch_confirm(branch_confirm)
     );
 

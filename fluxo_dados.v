@@ -153,6 +153,7 @@ module datapath
   input              is_lui,
   input              is_jal,
   input              is_jalr,
+  input              is_auipc,
   input              mem2reg,
   input              memwrite,
   input              alusrc,
@@ -229,6 +230,7 @@ module datapath
   );
 
   assign WriteData = is_lui ? imm : 
+                     is_auipc ? pc + (imm << 12) :
                     (is_jal || is_jalr) ? pc + 4 :
                     mem2reg ? memout : alu_out;
 endmodule
