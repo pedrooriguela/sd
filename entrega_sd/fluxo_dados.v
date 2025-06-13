@@ -10,7 +10,7 @@ module alu
   input  [3:0]   ALUctl,
 
   input  [W-1:0] A, B,
-  input          rst,
+
   output [W-1:0] ALUout,
 
   output zero

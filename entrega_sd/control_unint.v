@@ -53,16 +53,16 @@ module control_unit(
     
 
     // Sinais da alu
-    wire is_add = (funct3 == ADD) && (funct7 == 7'h00); //
+    wire is_add = ((funct3 == ADD) && (funct7 == 7'h00)) || ((funct3 == ADD) && is_itype); //
     wire is_sub = (funct3 == SUB) && (funct7 == 7'h20); //
     wire is_xor = (funct3 == XOR); 
     wire is_or = (funct3 == OR); //
     wire is_and = (funct3 == AND); //
     wire is_shift_ll = (funct3 == SHIFT_LL);
-    wire is_shift_rl = (funct3 == SHIFT_RL);
-    wire is_shift_ra = (funct3 == SHIFT_RA);
-    wire is_set_lts = (funct3 == SET_LTS) && (funct7 == 7'h00); //
-    wire is_set_ltu = (funct3 == SET_LTU && (funct7 == 7'h20)); //
+    wire is_shift_rl = (funct3 == SHIFT_RL) && (funct7 == 7'h00);
+    wire is_shift_ra = (funct3 == SHIFT_RA) && (funct7 == 7'h20); // shift right arithmetic
+    wire is_set_lts = (funct3 == SET_LTS);
+    wire is_set_ltu = (funct3 == SET_LTU);
 
     assign aluctl = is_and ? 4'b0000 :
                     is_or ? 4'b0001 :
@@ -73,6 +73,7 @@ module control_unit(
                     is_xor ? 4'b0110 :
                     is_shift_ll ? 4'b0111 :
                     is_shift_rl ? 4'b1000 :
-                    4'b1001; // shift right arithmetic 
+                    is_shift_ra ? 4'b1001: 
+                    4'bz; // shift right arithmetic 
 
 endmodule

@@ -51,15 +51,17 @@ module poliriscv_tb();
         $display("x1 (Valor esperado 10): %h", dut.datapath0.rf0.registers[1]);
         $display("x2 (Valor esperado 5): %h", dut.datapath0.rf0.registers[2]);
         $display("x3 (Valor esperado -5 / 0xFFFFFFFB): %h", dut.datapath0.rf0.registers[3]);
+        $display("x4 (Valor esperado 0xF0): %h", dut.datapath0.rf0.registers[4]);
         $display("x5 (ADD: Valor esperado 15): %h", dut.datapath0.rf0.registers[5]);
         $display("x6 (SUB: Valor esperado 5): %h", dut.datapath0.rf0.registers[6]);
         $display("x7 (AND: Valor esperado 0): %h", dut.datapath0.rf0.registers[7]);
+        $display("x8 (OR: Valor esperado 0xFA): %h", dut.datapath0.rf0.registers[8]);
         $display("x9 (XOR: Valor esperado 0xFA): %h", dut.datapath0.rf0.registers[9]);
         $display("x10 (SLL: Valor esperado 40): %d", dut.datapath0.rf0.registers[10]);
         $display("x11 (SRL: Valor esperado 0xF): %h", dut.datapath0.rf0.registers[11]);
-        $display("x12 (SRA: Valor esperado -3): %d", dut.datapath0.rf0.registers[12]);
-        $display("x13 (SLT: Valor esperado 1): %d", dut.datapath0.rf0.registers[13]);
-        $display("x14 (SLTU: Valor esperado 0): %d", dut.datapath0.rf0.registers[14]);
+        $display("x12 (SRA: Valor esperado -3): %b", dut.datapath0.rf0.registers[12]);
+        $display("x13 (SLT: Valor esperado 1): %b", dut.datapath0.rf0.registers[13]);
+        $display("x14 (SLTU: Valor esperado 0): %b", dut.datapath0.rf0.registers[14]);
 
         // Encerra a simulação
         $finish;
